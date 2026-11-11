@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Статистика обсуждений VK</title>
+<style>
+:root{
+  --bg:#f5f6f8;--panel:#fff;--fg:#1c1f24;--muted:#6a7280;--line:#e2e5ea;--soft:#f0f2f5;
+  --accent:#2a5885;--accent-fg:#fff;--ok:#1f7a4d;--ok-bg:#e7f5ee;--bad:#b3261e;--bad-bg:#fdecea;--warn-bg:#fff4e0;
+  --bonus:#8a5a00;--bonus-bg:#fff2d6;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#15171b;--panel:#1d2026;--fg:#e7e9ec;--muted:#9aa2ad;--line:#2e333b;--soft:#252930;
+  --accent:#6ea6e6;--accent-fg:#0d1a28;--ok:#6fd3a0;--ok-bg:#16301f;--bad:#ff8a80;--bad-bg:#3a1a18;--warn-bg:#352a14;
+  --bonus:#f0c060;--bonus-bg:#3a2e12;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 -apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:22px;margin:0 0 16px}
+h2{font-size:16px;margin:0 0 12px}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input[type=text],input[type=password],input[type=date],input[type=number],select{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 9px;min-height:34px}
+input[type=text]{flex:1;min-width:200px}
+input[type=number]{width:110px}
+button{font:inherit;border:1px solid var(--line);background:var(--soft);color:var(--fg);border-radius:8px;padding:6px 12px;min-height:34px;cursor:pointer}
+button:hover{filter:brightness(.97)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:600}
+button.icon{padding:4px 9px;min-height:30px;color:var(--muted)}
+button:disabled{opacity:.55;cursor:default}
+.muted{color:var(--muted)}.small{font-size:13px}
+.status{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:13px;font-weight:600}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.paste{margin-top:12px;display:none}.paste.show{display:block}
+.paste ol{margin:6px 0 10px;padding-left:20px}
+.steps{display:flex;flex-direction:column;gap:14px;margin-top:12px}
+.step{display:flex;gap:12px;align-items:flex-start}
+.step .num{flex:none;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-fg);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;margin-top:5px}
+.step>div{flex:1;min-width:0}
+.bm{display:inline-block;margin-left:6px;padding:2px 10px;border:1px dashed var(--accent);border-radius:8px;font-weight:600;cursor:grab}
+.msg{margin-top:10px;padding:8px 12px;border-radius:8px;font-size:14px;display:none}
+.msg.show{display:block}.msg.err{background:var(--bad-bg);color:var(--bad)}.msg.ok{background:var(--ok-bg);color:var(--ok)}
+table{border-collapse:collapse;width:100%}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:12.5px;color:var(--muted);font-weight:600;white-space:nowrap}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll{overflow-x:auto}
+.comm td{padding:7px 8px}
+.comm .name{font-weight:600}
+.tag{font-size:11px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--muted);font-weight:400;margin-left:4px}
+.dates{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.off td:not(:first-child){opacity:.45}
+.ttoggle{margin-top:4px;font-size:12.5px;padding:2px 9px;min-height:26px;border-radius:999px}
+.ttoggle.part{border-color:var(--bonus);color:var(--bonus)}
+tr.topics>td{background:var(--soft);padding:10px 12px 12px}
+.tlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 16px;margin-top:8px}
+.tlist label{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;cursor:pointer;padding:2px 0}
+.tlist input{margin-top:3px}
+.tlist label.unchecked span{color:var(--muted);text-decoration:line-through}
+.ttools{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.ttools button{font-size:12.5px;padding:2px 10px;min-height:26px}
+.empty{color:var(--muted);padding:14px 0}
+.calc{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+.calc label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.formula{font-size:13px;color:var(--muted);max-width:620px}
+#log{display:none;margin-top:12px;background:var(--soft);border-radius:8px;padding:10px 12px;font:12.5px/1.5 ui-monospace,Consolas,monospace;max-height:220px;overflow:auto;white-space:pre-wrap}
+#log.show{display:block}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tab{border-radius:999px;padding:5px 14px}
+.tab.active{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.card{background:var(--soft);border-radius:10px;padding:10px 14px}
+.card .v{font-size:22px;font-weight:650;font-variant-numeric:tabular-nums}.card .l{font-size:12.5px;color:var(--muted)}
+.res th.sort{cursor:pointer;user-select:none}.res th.sort:hover{color:var(--fg)}
+.res th.asc::after{content:" ▲"}.res th.desc::after{content:" ▼"}
+.res tbody tr.a{cursor:pointer}.res tbody tr.a:hover{background:var(--soft)}
+.res tbody tr.a td:first-child::before{content:"▸ ";color:var(--muted)}
+.res tbody tr.a.open td:first-child::before{content:"▾ "}
+.res tfoot td{font-weight:650;border-top:2px solid var(--line);border-bottom:none}
+.res td.hl{font-weight:650}
+tr.posts>td{background:var(--soft);padding:6px 10px 12px}
+tr.posts table td,tr.posts table th{padding:5px 8px;font-size:13px}
+.prev{color:var(--muted);min-width:240px}
+.b.sk{color:var(--muted);background:var(--soft);border:1px solid var(--line)}
+.b{display:inline-block;font-size:11px;font-weight:700;color:var(--bonus);background:var(--bonus-bg);border-radius:5px;padding:0 5px;margin-right:4px}
+.cerr{background:var(--bad-bg);color:var(--bad);padding:10px 12px;border-radius:8px;margin-bottom:10px;font-size:14px}
+.top{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:10px 14px;margin-bottom:12px;background:var(--panel)}
+.top .lbl{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.top .ttl{font-size:16px;font-weight:650;margin:2px 0}
+.top details{margin-top:6px}.top summary{cursor:pointer;font-size:13px;color:var(--muted)}
+.top table td,.top table th{padding:5px 8px;font-size:13px}
+.cwarn{background:var(--warn-bg);padding:8px 12px;border-radius:8px;margin-bottom:10px;font-size:13.5px}
+.restools{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+@media print{.noprint{display:none!important}body{background:#fff}.panel{border:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Статистика обсуждений VK</h1>
+
+  <!-- Доступ -->
+  <section class="panel noprint" id="authPanel">
+    <div class="status">
+      <span class="row"><b>Ключ доступа VK</b> <span id="authPill" class="pill bad">…</span></span>
+      <span class="row">
+        <button id="btnGetKey" style="display:none">Получить ключ в VK</button>
+        <button id="btnShowPaste" style="display:none">Сменить ключ</button>
+      </span>
+    </div>
+    <div class="paste" id="paste">
+      <div class="steps">
+        <div class="step"><span class="num">1</span><div>
+          <div class="row"><label class="small muted" for="clientId">ID приложения VK (client_id)</label>
+            <input type="text" id="clientId" inputmode="numeric" placeholder="например 1234567" style="flex:0 1 180px;min-width:140px">
+            <button id="btnSaveClient">Запомнить</button></div>
+          <div class="small muted" style="margin-top:4px">Вводится один раз — программа его запомнит.</div>
+        </div></div>
+        <div class="step"><span class="num">2</span><div>
+          <button id="btnGetKey" class="primary" disabled>Получить ключ в VK</button>
+          <span class="small muted">— откроется VK: войдите под администратором и нажмите «Разрешить».</span>
+          <div class="small" style="margin-top:8px">
+            <label><input type="radio" name="redir" value="auto"> <b>Автоматически</b> — VK сам вернёт ключ в программу</label><br>
+            <span class="muted" style="margin-left:22px;display:inline-block">Нужно один раз добавить <code id="cbUrl">http://localhost:8765/callback</code> в «Доверенный redirect URL» в настройках приложения VK. Если VK покажет ошибку redirect_uri — выберите вариант ниже.</span><br>
+            <label><input type="radio" name="redir" value="manual"> <b>Через закладку</b> — VK откроет страницу blank.html, на ней нажмите закладку</label>
+            <a id="bookmarklet" class="bm" href="#" title="Перетащите на панель закладок">→ vkbot</a>
+            <br><span class="muted" style="margin-left:22px;display:inline-block">Один раз перетащите кнопку «→ vkbot» мышью на панель закладок браузера (Ctrl+Shift+B — показать панель).</span>
+          </div>
+        </div></div>
+        <div class="step"><span class="num">3</span><div>
+          <div class="small muted" style="margin-bottom:4px">Или по-старому — вставьте ключ (<code>vk1.a.…</code>) или адрес страницы <code>blank.html#access_token=…</code> целиком:</div>
+          <div class="row">
+            <input type="password" id="pasteInput" placeholder="vk1.a.… или https://oauth.vk.com/blank.html#access_token=…" autocomplete="off" style="flex:1;min-width:200px">
+            <button id="btnPaste">Сохранить и проверить</button>
+          </div>
+        </div></div>
+      </div>
+      <p class="small muted" style="margin:10px 0 0">Ключ должен быть получен на этом же компьютере и в этой же сети (без VPN только в браузере). Ключ не сохраняется на диск — после перезапуска программы его нужно получить снова.</p>
+    </div>
+    <div class="msg" id="authMsg"></div>
+  </section>
+
+  <!-- Сообщества -->
+  <section class="panel">
+    <h2>Сообщества</h2>
+    <div class="row noprint" style="margin-bottom:12px">
+      <input type="text" id="addInput" placeholder="Адрес сообщества: https://vk.com/club123, короткое имя или id">
+      <button id="btnAdd">Добавить</button>
+    </div>
+    <div class="msg" id="commMsg"></div>
+    <div class="scroll">
+      <table class="comm">
+        <thead><tr><th style="width:70px" title="Учитывать сообщество в следующем подсчёте (запоминается)">Считать</th><th>Сообщество и его обсуждения</th><th>Период (сутки включительно) <span class="muted" style="font-weight:400" title="Даты не сохраняются между запусками">· при запуске — последние 7 дней</span></th><th class="noprint"></th></tr></thead>
+        <tbody id="commBody"></tbody>
+      </table>
+    </div>
+    <div class="row noprint small" id="allPeriod" style="margin-top:12px">
+      <span class="muted">Один период для всех:</span>
+      <select id="presetAll">
+        <option value="">быстрый выбор…</option>
+        <option value="last7">последние 7 дней (без сегодня)</option>
+        <option value="prevweek">прошлая неделя (пн–вс)</option>
+        <option value="thisweek">эта неделя</option>
+        <option value="prevmonth">прошлый месяц</option>
+        <option value="thismonth">этот месяц</option>
+      </select>
+      <input type="date" id="allFrom"> — <input type="date" id="allTo">
+      <button id="btnAllPeriod">Применить ко всем</button>
+    </div>
+  </section>
+
+  <!-- Подсчёт -->
+  <section class="panel noprint">
+    <div class="calc">
+      <label>Делитель для бонусных баллов
+        <input type="number" id="divisor" min="1" step="1" value="500">
+      </label>
+      <div class="formula">
+        <b>Бонусные баллы</b> = (символы обычных сообщений + 2 × символы текста после строки «Бонусные баллы: …») / делитель.
+        Сама строка «Бонусные баллы» не считается. Сообщения берутся за выбранные сутки каждого сообщества.
+        Символы считаются без пробелов, переносов строк и невидимых символов.
+        Сообщения с первой строкой «не считать» входят в число сообщений и активность, но не дают символов и баллов.
+      </div>
+      <button id="btnRun" class="primary" style="min-width:140px">Посчитать</button>
+    </div>
+    <div class="msg" id="runMsg"></div>
+    <div id="log"></div>
+  </section>
+
+  <!-- Результаты -->
+  <section class="panel" id="results" style="display:none">
+    <div class="restools">
+      <h2 style="margin:0">Результаты <span class="muted small" id="resMeta"></span></h2>
+      <span class="row noprint">
+        <button id="btnCsv">Скачать CSV (Excel)</button>
+        <button id="btnPrint">Печать</button>
+      </span>
+    </div>
+    <div class="tabs noprint" id="tabs"></div>
+    <div id="resBody"></div>
+  </section>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+let state = null, result = null, activeTab = "combined", sortState = {};
+const nf = new Intl.NumberFormat("ru-RU", {maximumFractionDigits: 2});
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = v => typeof v === "number" ? nf.format(v) : esc(v);
+
+async function api(path, body) {
+  const opt = body === undefined ? {} : {method: "POST", body: JSON.stringify(body)};
+  const r = await fetch("/api/" + path, opt);
+  let j;
+  try { j = await r.json(); } catch (e) { throw new Error("Сервер не отвечает — запущено ли окно программы?"); }
+  if (!r.ok || j.error) { const err = new Error(j.error || ("HTTP " + r.status)); err.needToken = j.needToken; throw err; }
+  return j;
+}
+function msg(id, text, ok) {
+  const el = $(id);
+  if (!text) { el.className = "msg"; return; }
+  el.textContent = text; el.className = "msg show " + (ok ? "ok" : "err");
+}
+
+// ---------- даты ----------
+const iso = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+function preset(kind) {
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const day = (t.getDay() + 6) % 7; // 0 = понедельник
+  const add = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  switch (kind) {
+    case "last7": return [add(t, -7), add(t, -1)];
+    case "prevweek": { const mon = add(t, -day - 7); return [mon, add(mon, 6)]; }
+    case "thisweek": return [add(t, -day), t];
+    case "prevmonth": return [new Date(t.getFullYear(), t.getMonth() - 1, 1), new Date(t.getFullYear(), t.getMonth(), 0)];
+    case "thismonth": return [new Date(t.getFullYear(), t.getMonth(), 1), t];
+  }
+  return null;
+}
+const ruDate = s => s.split("-").reverse().join(".");
+
+// ---------- состояние ----------
+async function load() {
+  try {
+    state = await api("state");
+  } catch (e) { msg("commMsg", e.message); return; }
+  renderAuth(); renderCommunities();
+  if (!$("divisor").dataset.touched) $("divisor").value = state.divisor;
+  if (!$("allFrom").value) { $("allFrom").value = state.defaultFrom; $("allTo").value = state.defaultTo; }
+  if (state.running && !polling) poll(0);
+}
+
+function renderAuth() {
+  const a = state.auth;
+  const pill = $("authPill");
+  pill.textContent = a.text; pill.className = "pill " + (a.ok ? "ok" : "bad");
+  $("btnShowPaste").style.display = a.canPaste && a.ok ? "" : "none";
+  $("btnGetKey").disabled = !a.authUrl;
+  if (a.canPaste) {
+    if (document.activeElement !== $("clientId")) $("clientId").value = a.clientId || "";
+    document.querySelector(`input[name=redir][value=${a.autoRedirect ? "auto" : "manual"}]`).checked = true;
+    $("cbUrl").textContent = a.callbackUrl;
+    // закладка: со страницы blank.html переносит #access_token=… в программу
+    $("bookmarklet").href = "javascript:location.href='" + a.callbackUrl + "'+location.hash";
+  }
+  if (a.canPaste && !a.ok) {
+    $("paste").classList.add("show");
+    if (!document.activeElement || document.activeElement === document.body) (a.clientId ? $("btnGetKey") : $("clientId")).focus();
+  }
+  // ключ может прийти из другой вкладки (через автоматический возврат или закладку) — проверяем раз в 3 с
+  clearTimeout(window.__authPoll);
+  if (a.canPaste && !a.ok) window.__authPoll = setTimeout(load, 3000);
+}
+
+const openTopics = new Set(); // у каких сообществ раскрыт список обсуждений
+function renderCommunities() {
+  const body = $("commBody");
+  if (!state.communities.length) {
+    body.innerHTML = '<tr><td colspan="4" class="empty">Список пуст — добавьте сообщество по адресу выше.</td></tr>';
+    return;
+  }
+  body.innerHTML = state.communities.map(c => {
+    const ts = c.topics || null;
+    const on = ts ? ts.filter(t => t.enabled).length : 0;
+    const label = ts ? `Обсуждения: ${on} из ${ts.length}` : "Обсуждения: не загружены";
+    const open = openTopics.has(c.id);
+    let h = `
+    <tr class="${c.enabled ? "" : "off"}" data-id="${c.id}">
+      <td><label title="Учитывать в следующем подсчёте"><input type="checkbox" data-act="enabled" ${c.enabled ? "checked" : ""}></label></td>
+      <td><a class="name" href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.name)}</a>${c.closed == 2 ? '<span class="tag">частное</span>' : c.closed == 1 ? '<span class="tag">закрытое</span>' : ""}
+        <div><button class="ttoggle ${ts && on < ts.length ? "part" : ""}" data-act="topics-toggle">${label} ${open ? "▴" : "▾"}</button></div></td>
+      <td><div class="dates">
+        <input type="date" data-act="from" value="${c.from}"> — <input type="date" data-act="to" value="${c.to}">
+        <select data-act="preset" class="noprint small"><option value="">быстро…</option><option value="last7">7 дней</option><option value="prevweek">прошлая неделя</option><option value="thisweek">эта неделя</option><option value="prevmonth">прошлый месяц</option><option value="thismonth">этот месяц</option></select>
+      </div></td>
+      <td class="noprint n"><button class="icon" data-act="del" title="Убрать из списка">✕</button></td>
+    </tr>`;
+    if (open) {
+      h += `<tr class="topics" data-id="${c.id}"><td></td><td colspan="3">`;
+      if (!ts) {
+        h += `<div class="ttools"><span class="muted small">Список обсуждений ещё не загружен.</span><button data-act="topics-reload">Загрузить из VK</button></div>`;
+      } else {
+        h += `<div class="ttools"><span class="muted small">Отметьте обсуждения, которые нужно считать${c.enabled ? "" : " (само сообщество сейчас не считается)"}:</span>
+          <button data-act="topics-all">Отметить все</button><button data-act="topics-none">Снять все</button><button data-act="topics-reload" title="Новые обсуждения появятся отмеченными">Обновить список из VK</button></div>`;
+        h += ts.length ? `<div class="tlist">${ts.map(t => `<label class="${t.enabled ? "" : "unchecked"}"><input type="checkbox" data-act="topic" data-topic="${t.id}" ${t.enabled ? "checked" : ""}><span>${esc(t.title)}</span></label>`).join("")}</div>`
+          : `<p class="muted small">В сообществе нет обсуждений.</p>`;
+      }
+      h += `</td></tr>`;
+    }
+    return h;
+  }).join("");
+}
+
+$("commBody").addEventListener("change", async ev => {
+  const tr = ev.target.closest("tr"); if (!tr) return;
+  const id = Number(tr.dataset.id), act = ev.target.dataset.act;
+  try {
+    if (act === "enabled") await api("communities/update", {id, enabled: ev.target.checked});
+    if (act === "topic") await api("communities/topic", {id, topicId: Number(ev.target.dataset.topic), enabled: ev.target.checked});
+    if (act === "from" || act === "to") await api("communities/update", {id, [act]: ev.target.value});
+    if (act === "preset" && ev.target.value) {
+      const p = preset(ev.target.value);
+      await api("communities/update", {id, from: iso(p[0]), to: iso(p[1])});
+    }
+    msg("commMsg"); await load();
+  } catch (e) { msg("commMsg", e.message); }
+});
+$("commBody").addEventListener("click", async ev => {
+  const btn = ev.target.closest("button"); if (!btn) return;
+  const act = btn.dataset.act, tr = btn.closest("tr"), id = Number(tr.dataset.id);
+  try {
+    if (act === "del") {
+      const name = $("commBody").querySelector(`tr[data-id="${id}"] .name`).textContent;
+      if (!confirm("Убрать «" + name + "» из списка?")) return;
+      await api("communities/delete", {id}); openTopics.delete(id);
+    } else if (act === "topics-toggle") {
+      if (openTopics.has(id)) { openTopics.delete(id); renderCommunities(); return; }
+      openTopics.add(id);
+      const c = state.communities.find(x => x.id === id);
+      if (c && !c.topics) { renderCommunities(); await loadTopics(id, btn); }
+    } else if (act === "topics-all" || act === "topics-none") {
+      await api("communities/topic", {id, enabled: act === "topics-all"});
+    } else if (act === "topics-reload") {
+      await loadTopics(id, btn);
+    } else return;
+    if (!act.startsWith("topics-reload") && !(act === "topics-toggle")) msg("commMsg");
+    await load();
+  } catch (e) { msg("commMsg", e.message); if (e.needToken) $("paste").classList.add("show"); await load(); }
+});
+async function loadTopics(id, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = "Загружаю…"; }
+  const r = await api("communities/topics", {id});
+  msg("commMsg", "Обсуждений загружено: " + r.count, true);
+}
+
+$("btnAdd").onclick = async () => {
+  const address = $("addInput").value.trim();
+  if (!address) return;
+  $("btnAdd").disabled = true;
+  try {
+    const r = await api("communities/add", {address});
+    $("addInput").value = ""; msg("commMsg", r.warning || ""); await load();
+  } catch (e) { msg("commMsg", e.message); if (e.needToken) $("paste").classList.add("show"); }
+  $("btnAdd").disabled = false;
+};
+$("addInput").addEventListener("keydown", e => { if (e.key === "Enter") $("btnAdd").click(); });
+
+$("presetAll").onchange = e => {
+  const p = preset(e.target.value); if (!p) return;
+  $("allFrom").value = iso(p[0]); $("allTo").value = iso(p[1]);
+};
+$("btnAllPeriod").onclick = async () => {
+  const from = $("allFrom").value, to = $("allTo").value;
+  if (!from || !to) { msg("commMsg", "Выберите обе даты"); return; }
+  try { await api("communities/period-all", {from, to}); msg("commMsg"); await load(); } catch (e) { msg("commMsg", e.message); }
+};
+
+// ---------- ключ ----------
+$("btnGetKey").onclick = () => { if (state.auth.authUrl) window.open(state.auth.authUrl, "_blank"); };
+$("bookmarklet").onclick = e => { e.preventDefault(); msg("authMsg", "Эту кнопку нужно перетащить мышью на панель закладок браузера, а нажимать — уже на странице VK blank.html после «Разрешить».", true); };
+async function saveAuthSettings(body) {
+  try { await api("auth/settings", body); msg("authMsg"); await load(); } catch (e) { msg("authMsg", e.message); }
+}
+$("btnSaveClient").onclick = () => saveAuthSettings({clientId: $("clientId").value});
+$("clientId").addEventListener("keydown", e => { if (e.key === "Enter") $("btnSaveClient").click(); });
+$("clientId").addEventListener("change", () => $("btnSaveClient").click());
+document.querySelectorAll("input[name=redir]").forEach(r => r.addEventListener("change", () => saveAuthSettings({autoRedirect: r.value === "auto"})));
+window.addEventListener("focus", () => { if (state && !state.auth.ok) load(); });
+$("btnShowPaste").onclick = () => $("paste").classList.toggle("show");
+$("pasteInput").addEventListener("keydown", e => { if (e.key === "Enter") $("btnPaste").click(); });
+$("btnPaste").onclick = async () => {
+  if (!$("pasteInput").value.trim()) return;
+  $("btnPaste").disabled = true; msg("authMsg", "");
+  try {
+    const r = await api("auth", {input: $("pasteInput").value});
+    $("pasteInput").value = ""; $("paste").classList.remove("show");
+    msg("authMsg", "Ключ принят: " + r.text, true); await load();
+  } catch (e) { msg("authMsg", e.message); await load(); }
+  $("btnPaste").disabled = false;
+};
+
+// ---------- подсчёт ----------
+$("divisor").addEventListener("input", () => $("divisor").dataset.touched = "1");
+// делитель сохраняется сразу при изменении — при следующем запуске он будет тем же
+$("divisor").addEventListener("change", async () => {
+  try { await api("settings", {divisor: $("divisor").value}); msg("runMsg"); } catch (e) { msg("runMsg", e.message); }
+});
+let polling = false;
+$("btnRun").onclick = async () => {
+  msg("runMsg");
+  try {
+    await api("report/start", {divisor: $("divisor").value});
+    poll(0);
+  } catch (e) { msg("runMsg", e.message); if (e.needToken) $("paste").classList.add("show"); }
+};
+async function poll(since) {
+  polling = true;
+  $("btnRun").disabled = true; $("btnRun").textContent = "Считаю…";
+  const log = $("log"); if (since === 0) log.textContent = ""; log.classList.add("show");
+  let st;
+  try { st = await api("report/status?since=" + since); }
+  catch (e) { msg("runMsg", e.message); polling = false; $("btnRun").disabled = false; $("btnRun").textContent = "Посчитать"; return; }
+  if (st.log.length) { log.textContent += st.log.join("\n") + "\n"; log.scrollTop = log.scrollHeight; }
+  if (st.running) { setTimeout(() => poll(st.next), 700); return; }
+  polling = false;
+  $("btnRun").disabled = false; $("btnRun").textContent = "Посчитать";
+  if (st.error) { msg("runMsg", st.error); load(); return; }
+  if (st.result) { result = st.result; activeTab = "combined"; sortState = {}; renderResults(); load(); }
+}
+
+// ---------- результаты ----------
+function views() {
+  const v = [{key: "combined", title: "Сводная", data: result.combined, isCombined: true}];
+  result.communities.forEach(c => v.push({key: "c" + c.id, title: c.name, data: c}));
+  return v;
+}
+function renderResults() {
+  $("results").style.display = "";
+  $("resMeta").textContent = "· " + result.generatedAt + " · делитель " + nf.format(result.divisor);
+  const vs = views();
+  if (!vs.find(v => v.key === activeTab)) activeTab = "combined";
+  $("tabs").innerHTML = vs.map(v => `<button class="tab ${v.key === activeTab ? "active" : ""}" data-tab="${v.key}">${esc(v.title)}</button>`).join("");
+  const v = vs.find(v => v.key === activeTab);
+  $("resBody").innerHTML = renderView(v);
+}
+$("tabs").onclick = e => { const t = e.target.dataset.tab; if (t) { activeTab = t; renderResults(); } };
+
+function sortedAuthors(v) {
+  const s = sortState[v.key]; const list = v.data.authors.slice();
+  if (!s) return list;
+  const get = a => s.key === "name" ? a.name : a.values[s.key];
+  list.sort((x, y) => {
+    const a = get(x), b = get(y);
+    const r = typeof a === "number" && typeof b === "number" ? a - b : String(a).localeCompare(String(b), "ru");
+    return r * s.dir;
+  });
+  return list;
+}
+
+function renderView(v) {
+  const d = v.data, metrics = result.metrics;
+  let h = "";
+  if (!v.isCombined) {
+    h += `<p class="small muted" style="margin-top:0"><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.name)}</a> · ${ruDate(d.from)} — ${ruDate(d.to)} (${esc(result.timezone)})</p>`;
+    if (d.error) return h + `<div class="cerr">Не удалось посчитать: ${esc(d.error)}</div>`;
+    if (d.skipped) h += `<p class="small muted" style="margin-top:-4px">Сообщений с пометкой «не считать»: ${fmt(d.skipped)} — они входят в число сообщений и активность обсуждений, но без символов и бонусных баллов.</p>`;
+    if (d.failedTopics && d.failedTopics.length) h += `<div class="cwarn">Не удалось прочитать обсуждения: ${d.failedTopics.map(esc).join(", ")}</div>`;
+  } else {
+    const errs = result.communities.filter(c => c.error);
+    if (errs.length) h += `<div class="cerr">Не посчитаны: ${errs.map(c => esc(c.name)).join(", ")} — подробности на их вкладках.</div>`;
+    const sk = result.communities.reduce((s, c) => s + (c.skipped || 0), 0);
+    if (sk) h += `<p class="small muted" style="margin:0 0 6px">Сообщений с пометкой «не считать»: ${fmt(sk)} (в числе сообщений есть, символов и баллов — нет)</p>`;
+    h += `<p class="small muted" style="margin-top:0">Все выбранные сообщества вместе, каждое — за свой период: ${result.communities.map(c => esc(c.name) + " (" + ruDate(c.from) + " — " + ruDate(c.to) + ")").join("; ")}</p>`;
+  }
+  h += topicsBlock(v);
+  const t = d.totals || {};
+  h += `<div class="cards">
+    <div class="card"><div class="v">${fmt(t.posts ?? 0)}</div><div class="l">сообщений</div></div>
+    <div class="card"><div class="v">${fmt(d.authors.length)}</div><div class="l">авторов</div></div>
+    ${t.chars !== undefined ? `<div class="card"><div class="v">${fmt(t.chars)}</div><div class="l">символов</div></div>` : ""}
+    ${t.bonus_points !== undefined ? `<div class="card"><div class="v">${fmt(t.bonus_points)}</div><div class="l">бонусных баллов всего</div></div>` : ""}
+  </div>`;
+  if (!d.authors.length) return h + `<p class="empty">За выбранный период сообщений нет.</p>`;
+  const s = sortState[v.key] || {};
+  const thCls = k => "sort" + (s.key === k ? (s.dir > 0 ? " asc" : " desc") : "");
+  h += `<div class="scroll"><table class="res" data-view="${v.key}"><thead><tr><th class="${thCls("name")}" data-sort="name">Автор</th>`;
+  metrics.forEach(m => h += `<th class="n ${thCls(m.key)}" data-sort="${m.key}">${esc(m.title)}</th>`);
+  h += `</tr></thead><tbody>`;
+  const postMetrics = metrics.filter(m => m.perPost);
+  sortedAuthors(v).forEach((a, i) => {
+    h += `<tr class="a" data-i="${a.id}"><td><a href="${esc(a.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(a.name)}</a>${a.isCommunity ? '<span class="tag">сообщество</span>' : ""}</td>`;
+    metrics.forEach(m => h += `<td class="n ${m.key === "bonus_points" ? "hl" : ""}">${fmt(a.values[m.key])}</td>`);
+    h += `</tr><tr class="posts" data-for="${a.id}" style="display:none"><td colspan="${metrics.length + 1}"><div class="scroll"><table><thead><tr><th>Дата</th>${v.isCombined ? "<th>Сообщество</th>" : ""}<th>Обсуждение</th><th>Текст (учтённый)</th>`;
+    postMetrics.forEach(m => h += `<th class="n">${esc(m.title)}</th>`);
+    h += `</tr></thead><tbody>`;
+    a.posts.forEach(p => {
+      h += `<tr><td style="white-space:nowrap"><a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.date)}</a></td>${v.isCombined ? `<td>${esc(p.community)}</td>` : ""}<td>${esc(p.topic)}</td><td class="prev">${p.bonus ? '<span class="b">×2</span>' : ""}${p.skipped ? '<span class="b sk">не считать</span>' : ""}${esc(p.preview)}</td>`;
+      postMetrics.forEach(m => h += `<td class="n">${fmt(p.values[m.key])}</td>`);
+      h += `</tr>`;
+    });
+    h += `</tbody></table></div></td></tr>`;
+  });
+  h += `</tbody><tfoot><tr><td>Итого</td>`;
+  metrics.forEach(m => h += `<td class="n">${fmt(t[m.key])}</td>`);
+  h += `</tr></tfoot></table></div>`;
+  return h;
+}
+
+// Самое активное обсуждение (для сообщества) или лидеры каждого сообщества (для сводной)
+function topicsBlock(v) {
+  const word = n => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? "сообщение" : a >= 2 && a <= 4 && (b < 12 || b > 14) ? "сообщения" : "сообщений"; };
+  if (v.isCombined) {
+    const rows = result.communities.filter(c => c.topics && c.topics.length);
+    if (!rows.length) return "";
+    return `<div class="top"><div class="lbl">Самые активные обсуждения</div><div class="scroll"><table><tbody>${rows.map(c => {
+      const t = c.topics[0];
+      return `<tr><td class="muted">${esc(c.name)}</td><td><a href="${esc(t.url)}" target="_blank" rel="noopener"><b>${esc(t.title)}</b></a></td><td class="n">${fmt(t.posts)} ${word(t.posts)}</td><td class="n muted">${fmt(t.authors)} авт.</td></tr>`;
+    }).join("")}</tbody></table></div></div>`;
+  }
+  const ts = v.data.topics || [];
+  if (!ts.length) return "";
+  const top = ts[0];
+  const ties = ts.filter(t => t.posts === top.posts && t !== top);
+  let h = `<div class="top"><div class="lbl">Самое активное обсуждение</div>
+    <div class="ttl"><a href="${esc(top.url)}" target="_blank" rel="noopener">${esc(top.title)}</a></div>
+    <div class="small muted">${fmt(top.posts)} ${word(top.posts)} · ${fmt(top.authors)} авт. · ${fmt(top.chars)} симв.${ties.length ? ` · столько же сообщений: ${ties.map(t => esc(t.title)).join(", ")}` : ""}</div>`;
+  if (ts.length > 1) {
+    h += `<details><summary>Все активные обсуждения за период (${ts.length})</summary><div class="scroll"><table><thead><tr><th>Обсуждение</th><th class="n">Сообщений</th><th class="n">Авторов</th><th class="n">Символов</th></tr></thead><tbody>${ts.map(t =>
+      `<tr><td><a href="${esc(t.url)}" target="_blank" rel="noopener">${esc(t.title)}</a></td><td class="n">${fmt(t.posts)}</td><td class="n">${fmt(t.authors)}</td><td class="n">${fmt(t.chars)}</td></tr>`).join("")}</tbody></table></div></details>`;
+  }
+  return h + `</div>`;
+}
+
+$("resBody").addEventListener("click", e => {
+  const th = e.target.closest("th[data-sort]");
+  if (th) {
+    const key = th.dataset.sort, view = th.closest("table").dataset.view;
+    const cur = sortState[view];
+    sortState[view] = {key, dir: cur && cur.key === key ? -cur.dir : (key === "name" ? 1 : -1)};
+    renderResults(); return;
+  }
+  const tr = e.target.closest("tr.a");
+  if (tr) {
+    const det = tr.parentNode.querySelector(`tr.posts[data-for="${tr.dataset.i}"]`);
+    const open = det.style.display === "none";
+    det.style.display = open ? "" : "none"; tr.classList.toggle("open", open);
+  }
+});
+
+// ---------- экспорт ----------
+$("btnPrint").onclick = () => window.print();
+$("btnCsv").onclick = () => {
+  const v = views().find(x => x.key === activeTab);
+  const q = s => '"' + String(s == null ? "" : s).replace(/"/g, '""') + '"';
+  const num = x => typeof x === "number" ? String(x).replace(".", ",") : q(x);
+  const lines = [["Автор", "Ссылка"].concat(result.metrics.map(m => m.title)).map(q).join(";")];
+  sortedAuthors(v).forEach(a => lines.push([q(a.name), q(a.url)].concat(result.metrics.map(m => num(a.values[m.key]))).join(";")));
+  lines.push([q("Итого"), q("")].concat(result.metrics.map(m => num((v.data.totals || {})[m.key]))).join(";"));
+  const blob = new Blob(["﻿" + lines.join("\r\n")], {type: "text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "vk-stat_" + (v.isCombined ? "svodnaya" : v.data.id) + "_" + iso(new Date()) + ".csv";
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+
+load();
+</script>
+</body>
+</html>

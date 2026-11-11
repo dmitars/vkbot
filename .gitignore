@@ -1,0 +1,30 @@
+# --- сборка ---
+target/
+build/
+*.class
+*.zip
+
+# --- dist: в репозитории не храним; собирается командой mvn package из src/dist, README и config.example ---
+/dist/
+
+# --- пользовательские данные и секреты (никогда не коммитить) ---
+config.properties
+config.properties.txt
+communities.json
+communities-demo.json
+*.json.tmp
+vk-token-cache.properties
+vkid-token.properties
+*.tmp
+logs/
+reports/
+*.log
+*.log.*
+
+# --- IDE / ОС ---
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+__MACOSX/

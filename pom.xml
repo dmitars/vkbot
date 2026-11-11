@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>vkbot</groupId>
+    <artifactId>vkbot</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+    <name>vkbot — статистика обсуждений VK</name>
+
+    <!-- Внешних зависимостей нет намеренно: jar запускается на любой машине с Java 11+ -->
+
+    <properties>
+        <maven.compiler.release>11</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <build>
+        <finalName>vkbot</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>vkbot.App</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <!--
+              mvn package  -> собирает папку dist/: vkbot.jar + скрипты из src/dist + README + пример настроек
+              mvn install  -> дополнительно упаковывает dist/ в target/vkbot-<версия>.zip (готовый архив для администратора)
+              Пользовательские файлы в dist/ (config.properties, communities.json, logs, reports) не трогаются
+              и в архив не попадают.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>assemble-dist</id>
+                        <phase>package</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.basedir}/dist"/>
+                                <copy file="${project.build.directory}/vkbot.jar" todir="${project.basedir}/dist" overwrite="true"/>
+                                <copy todir="${project.basedir}/dist" overwrite="true">
+                                    <fileset dir="${project.basedir}/src/dist" includes="*.bat"/>
+                                    <fileset dir="${project.basedir}" includes="README.md,config.example.properties"/>
+                                </copy>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>zip-dist</id>
+                        <phase>install</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <target>
+                                <delete file="${project.build.directory}/vkbot-${project.version}.zip" quiet="true"/>
+                                <!-- только файлы дистрибутива, без пользовательских данных -->
+                                <zip destfile="${project.build.directory}/vkbot-${project.version}.zip">
+                                    <zipfileset dir="${project.basedir}/dist" prefix="vkbot"
+                                                includes="vkbot.jar,*.bat,README.md,config.example.properties"/>
+                                </zip>
+                                <echo message="Архив готов: ${project.build.directory}/vkbot-${project.version}.zip"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

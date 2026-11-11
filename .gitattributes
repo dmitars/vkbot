@@ -1,0 +1,8 @@
+# .bat-файлы должны иметь окончания строк Windows, иначе cmd может читать их неверно
+*.bat text eol=crlf
+*.java text eol=lf
+*.md text eol=lf
+*.properties text eol=lf
+*.html text eol=lf
+*.xml text eol=lf
+*.jar binary
