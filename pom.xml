@@ -38,10 +38,11 @@
                 </configuration>
             </plugin>
             <!--
-              mvn package  -> собирает папку dist/: vkbot.jar + скрипты из src/dist + README + пример настроек
-              mvn install  -> дополнительно упаковывает dist/ в target/vkbot-<версия>.zip (готовый архив для администратора)
-              Пользовательские файлы в dist/ (config.properties, communities.json, logs, reports) не трогаются
-              и в архив не попадают.
+              mvn package  -> собирает дистрибутив в target/vkbot/: vkbot.jar + всё из src/dist (скрипты .bat,
+                              config.example.properties) + README.md
+              mvn install  -> дополнительно упаковывает его в target/vkbot-<версия>.zip (папка vkbot/ внутри)
+              Внимание: mvn clean удаляет target/ целиком — для работы распакуйте архив в отдельную папку,
+              иначе вместе с target пропадут config.properties и communities.json.
             -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -54,12 +55,13 @@
                         <goals><goal>run</goal></goals>
                         <configuration>
                             <target>
-                                <mkdir dir="${project.basedir}/dist"/>
-                                <copy file="${project.build.directory}/vkbot.jar" todir="${project.basedir}/dist" overwrite="true"/>
-                                <copy todir="${project.basedir}/dist" overwrite="true">
-                                    <fileset dir="${project.basedir}/src/dist" includes="*.bat"/>
-                                    <fileset dir="${project.basedir}" includes="README.md,config.example.properties"/>
+                                <mkdir dir="${project.build.directory}/vkbot"/>
+                                <copy file="${project.build.directory}/vkbot.jar" todir="${project.build.directory}/vkbot" overwrite="true"/>
+                                <copy todir="${project.build.directory}/vkbot" overwrite="true">
+                                    <fileset dir="${project.basedir}/src/dist"/>
+                                    <fileset dir="${project.basedir}" includes="README.md"/>
                                 </copy>
+                                <echo message="Дистрибутив собран: ${project.build.directory}/vkbot"/>
                             </target>
                         </configuration>
                     </execution>
@@ -70,9 +72,9 @@
                         <configuration>
                             <target>
                                 <delete file="${project.build.directory}/vkbot-${project.version}.zip" quiet="true"/>
-                                <!-- только файлы дистрибутива, без пользовательских данных -->
+                                <!-- только файлы дистрибутива, без пользовательских данных (config.properties, communities.json, logs) -->
                                 <zip destfile="${project.build.directory}/vkbot-${project.version}.zip">
-                                    <zipfileset dir="${project.basedir}/dist" prefix="vkbot"
+                                    <zipfileset dir="${project.build.directory}/vkbot" prefix="vkbot"
                                                 includes="vkbot.jar,*.bat,README.md,config.example.properties"/>
                                 </zip>
                                 <echo message="Архив готов: ${project.build.directory}/vkbot-${project.version}.zip"/>

@@ -149,11 +149,11 @@ metric.hours.aggregate=sum        # count | sum | avg | min | max | list | disti
 Внешних зависимостей нет, нужен только Maven и JDK 11 или новее.
 
 ```bash
-mvn package    # собирает папку dist/: vkbot.jar, скрипты .bat, README, config.example.properties
-mvn install    # то же + архив target/vkbot-<версия>.zip с папкой vkbot/ для передачи администратору
+mvn package    # дистрибутив в target/vkbot/: vkbot.jar, скрипты .bat, config.example.properties, README
+mvn install    # то же + архив target/vkbot-<версия>.zip (внутри папка vkbot/) для передачи администратору
 ```
 
-Пользовательские файлы в `dist/` (`config.properties`, `communities.json`, `logs/`, `reports/`) сборка не трогает, и в архив они не попадают: туда входит только `vkbot.jar`, `*.bat`, `README.md` и `config.example.properties`.
+В архив попадают только файлы дистрибутива, пользовательские данные в него не входят. **`mvn clean` удаляет `target/` целиком**, поэтому для работы распакуйте архив в отдельную папку. Иначе при очистке пропадут ваши `config.properties` и `communities.json`.
 
 Структура:
 
@@ -170,8 +170,8 @@ src/main/java/vkbot/
   stats/metrics/           встроенные и regex-метрики
   report/                  HTML-отчёт
   json/                    минимальный JSON-парсер
-src/dist/                  скрипты запуска (run.bat, run-demo.bat, login.bat)
-dist/                      собранный дистрибутив (создаётся сборкой, в git не хранится)
+src/dist/                  файлы дистрибутива: run.bat, run-demo.bat, login.bat, config.example.properties
+target/vkbot/              собранный дистрибутив (mvn package); target/vkbot-<версия>.zip — архив (mvn install)
 ```
 
 Запуск вручную: `java -jar vkbot.jar [config.properties] [--demo]` для интерфейса, `--cli` для одного HTML-отчёта по `vk.group_id` без интерфейса, `--login` для входа через VK ID. Любой параметр можно переопределить через `-Dключ=значение`, например `-Dperiod.days=14`.
