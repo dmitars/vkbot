@@ -155,6 +155,8 @@ tr.posts table td,tr.posts table th{padding:5px 8px;font-size:13px}
   </section>
 
   <!-- Сообщества -->
+  <!-- Сообщества, подсчёт и результаты показываются только когда есть ключ VK -->
+  <div id="workArea" style="display:none">
   <section class="panel">
     <h2>Сообщества</h2>
     <div class="row noprint" style="margin-bottom:12px">
@@ -213,6 +215,7 @@ tr.posts table td,tr.posts table th{padding:5px 8px;font-size:13px}
     <div class="tabs noprint" id="tabs"></div>
     <div id="resBody"></div>
   </section>
+  </div>
 </div>
 
 <script>
@@ -275,6 +278,8 @@ function setPasteOpen(open) {
 function renderAuth() {
   const a = state.auth;
   if (a.ok && lastAuthOk === false) changingKey = false; // только что получили новый ключ
+  // без ключа работать с сообществами и отчётом нельзя — показываем только блок ключа
+  $("workArea").style.display = a.ok ? "" : "none";
   lastAuthOk = a.ok;
   const pill = $("authPill");
   pill.textContent = a.text; pill.className = "pill " + (a.ok ? "ok" : "bad");
