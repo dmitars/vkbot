@@ -49,7 +49,7 @@ public final class WebServer {
         LocalDate today = LocalDate.now(cfg.zone());
         this.store = new Store(storeFile, today.minusDays(7), today.minusDays(1), cfg.getInt("bonus.divisor", 500));
         this.reports = new ReportService(cfg, transport, auth);
-        auth.setAuthSettingsSource(store::clientId, store::autoRedirect, cfg.getInt("ui.port", 8765), store::scope);
+        auth.setAuthSettingsSource(store::clientId, store::autoRedirect, cfg.getInt("ui.port", 8765), store::authMode);
     }
 
     public String start() throws IOException {
@@ -72,15 +72,34 @@ public final class WebServer {
         try {
             if (path.equals("/") || path.equals("/index.html")) {
                 sendResource(ex, "/web/index.html", "text/html; charset=utf-8");
+            } else if (path.equals("/vkapp") || path.equals("/vkapp/")) {
+                // страница мини-приложения VK: получает ключ через VKWebAppGetAuthToken и передаёт его программе
+                sendResource(ex, "/web/vkapp.html", "text/html; charset=utf-8");
+            } else if (path.equals("/vk-bridge.min.js")) {
+                sendResource(ex, "/web/vk-bridge.min.js", "application/javascript; charset=utf-8");
             } else if (path.equals("/callback")) {
-                // возврат из VK при vkapp.redirect_uri=http://localhost:порт/callback — ключ во фрагменте адреса
-                send(ex, 200, "text/html; charset=utf-8", ("<!doctype html><meta charset=utf-8><title>vkbot</title>"
-                        + "<body style=\"font:16px sans-serif;padding:40px\"><h2 id=m>Передаю ключ…</h2><script>"
+                // возврат из VK (redirect на localhost или закладка «→ vkbot»): ключ во фрагменте адреса.
+                // Эта вкладка — та, что открыла кнопка «Получить ключ», поэтому после передачи ключа закрываем её,
+                // а основная вкладка программы узнаёт о ключе через BroadcastChannel — вторая копия программы не открывается.
+                send(ex, 200, "text/html; charset=utf-8", ("<!doctype html><meta charset=utf-8><title>vkbot — ключ</title>"
+                        + "<body style=\"font:16px sans-serif;padding:40px\"><h2 id=m>Передаю ключ…</h2><p id=h></p><script>"
                         + "fetch('/api/auth',{method:'POST',body:JSON.stringify({input:location.href})})"
-                        + ".then(r=>r.json()).then(j=>{document.getElementById('m').textContent=j.error?('Ошибка: '+j.error)"
-                        + ":'Готово! Ключ получен. Окно можно закрыть.';if(!j.error)setTimeout(()=>location.href='/',1200)});"
+                        + ".then(r=>r.json()).then(j=>{var m=document.getElementById('m');"
+                        + "if(j.error){m.textContent='Ошибка: '+j.error;return;}"
+                        + "m.textContent='Готово! Ключ получен.';"
+                        + "try{new BroadcastChannel('vkbot').postMessage('auth')}catch(e){}"
+                        + "history.replaceState(null,'','/callback');"
+                        + "setTimeout(function(){window.close();document.getElementById('h').textContent="
+                        + "'Эту вкладку можно закрыть — программа уже открыта в другой вкладке.'},600)});"
                         + "</script></body>").getBytes(StandardCharsets.UTF_8));
+            } else if (path.equals("/api/auth") && "OPTIONS".equalsIgnoreCase(ex.getRequestMethod())) {
+                cors(ex);
+                ex.sendResponseHeaders(204, -1);
+                ex.close();
             } else if (path.startsWith("/api/")) {
+                if (path.equals("/api/auth")) {
+                    cors(ex);
+                }
                 Object result = api(ex, path.substring(5));
                 sendJson(ex, 200, result);
             } else {
@@ -177,8 +196,8 @@ public final class WebServer {
             case "auth/diagnose":
                 return Diagnostics.run(new VkClient(transport.get(), auth.token(), cfg.apiVersion(), 0, 1), store.entries());
             case "auth/settings":
-                if (body.has("scope")) {
-                    store.setScope(body.get("scope").asText(""));
+                if (body.has("authMode")) {
+                    store.setAuthMode(body.get("authMode").asText(""));
                 }
                 store.setAuthSettings(body.has("clientId") ? body.get("clientId").asText("") : null,
                         body.has("autoRedirect") ? body.get("autoRedirect").asBoolean() : null);
@@ -230,6 +249,16 @@ public final class WebServer {
         }
         store.setTopics(communityId, topics);
         return topics.size();
+    }
+
+    /** Разрешаем передачу ключа только на /api/auth и с любой страницы (включая мини-приложение во фрейме VK). */
+    private static void cors(HttpExchange ex) {
+        String origin = ex.getRequestHeaders().getFirst("Origin");
+        ex.getResponseHeaders().set("Access-Control-Allow-Origin", origin == null ? "*" : origin);
+        ex.getResponseHeaders().set("Access-Control-Allow-Methods", "POST, OPTIONS");
+        ex.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+        ex.getResponseHeaders().set("Access-Control-Allow-Private-Network", "true");
+        ex.getResponseHeaders().set("Vary", "Origin");
     }
 
     private static Map<String, Object> err(Exception e) {

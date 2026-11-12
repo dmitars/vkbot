@@ -76,8 +76,8 @@ public final class Store {
     private String clientId = "";
     /** true — VK возвращает ключ прямо на http://localhost:порт/callback; false — на oauth.vk.com/blank.html. */
     private boolean autoRedirect;
-    /** Запрашиваемые права (scope) для ключа, например "groups". Пусто — без дополнительных прав. */
-    private String scope = "groups"; // по документации board.getTopics: для закрытых и частных сообществ нужно право groups
+    /** Способ получения ключа: miniapp (VKWebAppGetAuthToken), auto (redirect на localhost), manual (blank.html). */
+    private String authMode = "miniapp";
 
     /**
      * @param defaultFrom/defaultTo период, который ставится всем сообществам при запуске:
@@ -115,16 +115,15 @@ public final class Store {
         return autoRedirect;
     }
 
-    public synchronized String scope() {
-        return scope;
+    public synchronized String authMode() {
+        return authMode;
     }
 
-    public synchronized void setScope(String s) throws IOException {
-        String v = s == null ? "" : s.trim().replaceAll("\\s+", "");
-        if (!v.isEmpty() && !v.matches("[a-z_,0-9]+")) {
-            throw new IllegalArgumentException("Права (scope) — слова через запятую, например groups или groups,offline");
+    public synchronized void setAuthMode(String m) throws IOException {
+        if (!"miniapp".equals(m) && !"auto".equals(m) && !"manual".equals(m)) {
+            throw new IllegalArgumentException("Неизвестный способ получения ключа: " + m);
         }
-        scope = v;
+        authMode = m;
         save();
     }
 
@@ -235,7 +234,11 @@ public final class Store {
         JsonNode root = Json.parse(new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
         clientId = root.get("clientId").asText(clientId);
         autoRedirect = root.get("autoRedirect").asBoolean();
-        scope = root.has("scope") ? root.get("scope").asText("") : scope;
+        if (root.has("authMode")) {
+            authMode = root.get("authMode").asText(authMode);
+        } else if (autoRedirect) {
+            authMode = "auto";
+        }
         double d = Double.parseDouble(root.get("divisor").asText(String.valueOf(divisor)));
         divisor = d > 0 ? d : divisor;
         for (JsonNode n : root.get("communities")) {
@@ -265,7 +268,7 @@ public final class Store {
         root.put("divisor", divisor);
         root.put("clientId", clientId);
         root.put("autoRedirect", autoRedirect);
-        root.put("scope", scope);
+        root.put("authMode", authMode);
         List<Object> list = new ArrayList<>();
         for (Entry e : entries) {
             list.add(e.toStoredMap());

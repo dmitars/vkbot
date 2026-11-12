@@ -34,13 +34,15 @@ public final class AuthService {
     /** Откуда брать ID приложения и способ возврата (настройки со страницы). */
     private java.util.function.Supplier<String> clientIdSource = () -> "";
     private java.util.function.BooleanSupplier autoRedirectSource = () -> false;
-    private java.util.function.Supplier<String> scopeSource = () -> "";
+    private java.util.function.Supplier<String> modeSource = () -> "miniapp";
+    /** Право, без которого не читаются обсуждения закрытых и частных сообществ (документация board.getTopics). */
+    public static final String SCOPE = "groups";
     private int uiPort = 8765;
 
     public void setAuthSettingsSource(java.util.function.Supplier<String> clientId,
                                       java.util.function.BooleanSupplier autoRedirect, int port,
-                                      java.util.function.Supplier<String> scope) {
-        this.scopeSource = scope;
+                                      java.util.function.Supplier<String> mode) {
+        this.modeSource = mode;
         this.clientIdSource = clientId;
         this.autoRedirectSource = autoRedirect;
         this.uiPort = port;
@@ -162,21 +164,25 @@ public final class AuthService {
                         : "Ключ VK действует до " + VkImplicitAuth.fmt(pageTokenExpiresAt))
                         : pageToken != null ? "Ключ VK истёк — вставьте новый" : "Введите ключ доступа VK");
                 String clientId = clientId();
-                boolean auto = autoRedirectSource.getAsBoolean();
+                String mode = modeSource.get();
                 m.put("clientId", clientId);
-                m.put("autoRedirect", auto);
+                m.put("authMode", mode);
                 m.put("callbackUrl", callbackUrl());
-                String scope = scopeSource.get();
-                if (scope == null || scope.isEmpty()) {
-                    scope = cfg.get("vkapp.scope", "");
-                }
-                m.put("scope", scopeSource.get());
+                m.put("miniAppUrl", "http://localhost:" + uiPort + "/vkapp");
                 if (!clientId.isEmpty()) {
-                    m.put("authUrl", VkImplicitAuth.authorizeUrl(clientId,
-                            auto ? callbackUrl() : "https://oauth.vk.com/blank.html", cfg.apiVersion(), scope));
+                    String blank = VkImplicitAuth.authorizeUrl(clientId, "https://oauth.vk.com/blank.html", cfg.apiVersion(), SCOPE);
                     // ссылка с возвратом на blank.html — для закладки «→ vkbot» и ручной вставки
-                    m.put("authUrlBlank", VkImplicitAuth.authorizeUrl(clientId,
-                            "https://oauth.vk.com/blank.html", cfg.apiVersion(), scope));
+                    m.put("authUrlBlank", blank);
+                    switch (mode) {
+                        case "miniapp":
+                            m.put("authUrl", "https://vk.com/app" + clientId);
+                            break;
+                        case "auto":
+                            m.put("authUrl", VkImplicitAuth.authorizeUrl(clientId, callbackUrl(), cfg.apiVersion(), SCOPE));
+                            break;
+                        default:
+                            m.put("authUrl", blank);
+                    }
                 }
                 m.put("canPaste", true);
                 break;
