@@ -61,6 +61,9 @@
                                     <fileset dir="${project.basedir}/src/dist"/>
                                     <fileset dir="${project.basedir}" includes="README.md"/>
                                 </copy>
+                                <!-- страница мини-приложения для GitHub Pages (docs/vkapp) — держим её в синхроне с ресурсом -->
+                                <copy file="${project.basedir}/src/main/resources/web/vkapp.html"
+                                      tofile="${project.basedir}/docs/vkapp/index.html" overwrite="true"/>
                                 <echo message="Дистрибутив собран: ${project.build.directory}/vkbot"/>
                             </target>
                         </configuration>

@@ -130,7 +130,7 @@ tr.posts table td,tr.posts table th{padding:5px 8px;font-size:13px}
           <span class="small muted">— откроется VK: войдите под администратором и разрешите доступ. Ключ всегда запрашивается с правом <b>groups</b>.</span>
           <div class="small" style="margin-top:8px">
             <label><input type="radio" name="redir" value="miniapp"> <b>Через мини-приложение</b> — рекомендуемый способ (по документации VK)</label><br>
-            <span class="muted" style="margin-left:22px;display:inline-block">Один раз: в настройках мини-приложения VK в поле адреса веб-версии укажите <code id="maUrl">http://localhost:8765/vkapp</code>. Кнопка откроет мини-приложение, оно само получит ключ и передаст его сюда.</span><br>
+            <span class="muted" style="margin-left:22px;display:inline-block">Один раз: разместите страницу мини-приложения на https (например, GitHub Pages репозитория: <code>https://ЛОГИН.github.io/vkbot/vkapp/</code>, см. README) и укажите этот адрес в настройках мини-приложения VK. Кнопка откроет мини-приложение: оно получит ключ и передаст его сюда (или кнопкой «Передать ключ в программу»).</span><br>
             <label><input type="radio" name="redir" value="auto"> <b>Автоматически через redirect</b> — VK сам вернёт ключ в программу</label><br>
             <span class="muted" style="margin-left:22px;display:inline-block">Нужно добавить <code id="cbUrl">http://localhost:8765/callback</code> в «Доверенный redirect URL» в настройках приложения VK.</span><br>
             <label><input type="radio" name="redir" value="manual"> <b>Через закладку</b> — VK откроет страницу blank.html, на ней нажмите закладку</label>
@@ -279,7 +279,6 @@ function renderAuth() {
     // закладка: со страницы blank.html переносит #access_token=… в программу
     $("bookmarklet").href = "javascript:location.href='" + a.callbackUrl + "'+location.hash";
     $("btnGetKeyBlank").disabled = !a.authUrlBlank;
-    $("maUrl").textContent = a.miniAppUrl;
   }
   if (a.canPaste && !a.ok) {
     $("paste").classList.add("show");
