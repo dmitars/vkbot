@@ -76,7 +76,7 @@ public final class Store {
     private String clientId = "";
     /** true — VK возвращает ключ прямо на http://localhost:порт/callback; false — на oauth.vk.com/blank.html. */
     private boolean autoRedirect;
-    /** Способ получения ключа: miniapp (VKWebAppGetAuthToken), auto (redirect на localhost), manual (blank.html). */
+    /** Способ получения ключа: miniapp (VKWebAppGetAuthToken) или manual (blank.html + закладка/вставка). */
     private String authMode = "miniapp";
 
     /**
@@ -120,7 +120,7 @@ public final class Store {
     }
 
     public synchronized void setAuthMode(String m) throws IOException {
-        if (!"miniapp".equals(m) && !"auto".equals(m) && !"manual".equals(m)) {
+        if (!"miniapp".equals(m) && !"manual".equals(m)) {
             throw new IllegalArgumentException("Неизвестный способ получения ключа: " + m);
         }
         authMode = m;
@@ -236,8 +236,9 @@ public final class Store {
         autoRedirect = root.get("autoRedirect").asBoolean();
         if (root.has("authMode")) {
             authMode = root.get("authMode").asText(authMode);
-        } else if (autoRedirect) {
-            authMode = "auto";
+        }
+        if (!"miniapp".equals(authMode) && !"manual".equals(authMode)) {
+            authMode = "miniapp"; // способ «redirect на localhost» убран: у мини-приложений нет доверенного redirect URL
         }
         double d = Double.parseDouble(root.get("divisor").asText(String.valueOf(divisor)));
         divisor = d > 0 ? d : divisor;

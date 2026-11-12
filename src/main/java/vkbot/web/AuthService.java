@@ -259,9 +259,6 @@ public final class AuthService {
                         case "miniapp":
                             m.put("authUrl", "https://vk.com/app" + clientId);
                             break;
-                        case "auto":
-                            m.put("authUrl", VkImplicitAuth.authorizeUrl(clientId, callbackUrl(), cfg.apiVersion(), SCOPE));
-                            break;
                         default:
                             m.put("authUrl", blank);
                     }

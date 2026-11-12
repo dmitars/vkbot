@@ -163,8 +163,6 @@ tr.posts table td,tr.posts table th{padding:5px 8px;font-size:13px}
           <div class="small" style="margin-top:8px">
             <label><input type="radio" name="redir" value="miniapp"> <b>Через мини-приложение</b> — рекомендуемый способ (по документации VK)</label><br>
             <span class="muted" style="margin-left:22px;display:inline-block">Один раз: разместите страницу мини-приложения на https (например, GitHub Pages репозитория: <code>https://ЛОГИН.github.io/vkbot/vkapp/</code>, см. README) и укажите этот адрес в настройках мини-приложения VK. Кнопка откроет мини-приложение: оно получит ключ и передаст его сюда (или кнопкой «Передать ключ в программу»).</span><br>
-            <label><input type="radio" name="redir" value="auto"> <b>Автоматически через redirect</b> — VK сам вернёт ключ в программу</label><br>
-            <span class="muted" style="margin-left:22px;display:inline-block">Нужно добавить <code id="cbUrl">http://localhost:8765/callback</code> в «Доверенный redirect URL» в настройках приложения VK.</span><br>
             <label><input type="radio" name="redir" value="manual"> <b>Через закладку</b> — VK откроет страницу blank.html, на ней нажмите закладку</label>
             <a id="bookmarklet" class="bm" href="#" title="Перетащите на панель закладок">→ vkbot</a>
             <br><span class="muted" style="margin-left:22px;display:inline-block">Один раз перетащите кнопку «→ vkbot» мышью на панель закладок браузера (Ctrl+Shift+B — показать панель). Вкладка VK после передачи ключа закроется сама.</span>
@@ -327,7 +325,6 @@ function renderAuth() {
   if (a.canPaste) {
     if (document.activeElement !== $("clientId")) $("clientId").value = a.clientId || "";
     document.querySelector(`input[name=redir][value=${a.authMode || "miniapp"}]`).checked = true;
-    $("cbUrl").textContent = a.callbackUrl;
     // закладка: со страницы blank.html переносит #access_token=… в программу
     $("bookmarklet").href = "javascript:location.href='" + a.callbackUrl + "'+location.hash";
     $("btnGetKeyBlank").disabled = !a.authUrlBlank;
@@ -446,10 +443,10 @@ $("btnAllPeriod").onclick = async () => {
 
 // ---------- ключ ----------
 // Вкладка VK открывается скриптом под одним именем: повторные нажатия не плодят вкладки,
-// а после передачи ключа (закладка/redirect) страница /callback может закрыть её сама.
+// а после передачи ключа (закладка или мини-приложение) страница /callback может закрыть её сама.
 $("btnGetKey").onclick = () => { if (state.auth.authUrl) window.open(state.auth.authUrl, "vkbot_auth"); };
 $("btnGetKeyBlank").onclick = () => { if (state.auth.authUrlBlank) window.open(state.auth.authUrlBlank, "vkbot_auth"); };
-// ключ пришёл в другой вкладке (мини-приложение, закладка, redirect) — сразу обновляем страницу
+// ключ пришёл в другой вкладке (мини-приложение или закладка) — сразу обновляем страницу
 try { new BroadcastChannel("vkbot").onmessage = () => { changingKey = false; load(); msg("authMsg", "Ключ получен.", true); }; } catch (_) {}
 $("bookmarklet").onclick = e => { e.preventDefault(); msg("authMsg", "Эту кнопку нужно перетащить мышью на панель закладок браузера, а нажимать — уже на странице VK blank.html после «Разрешить».", true); };
 async function saveAuthSettings(body) {

@@ -78,7 +78,7 @@ public final class WebServer {
             } else if (path.equals("/vk-bridge.min.js")) {
                 sendResource(ex, "/web/vk-bridge.min.js", "application/javascript; charset=utf-8");
             } else if (path.equals("/callback")) {
-                // возврат из VK (redirect на localhost или закладка «→ vkbot»): ключ во фрагменте адреса.
+                // передача ключа из мини-приложения или закладкой «→ vkbot»: ключ во фрагменте адреса.
                 // Эта вкладка — та, что открыла кнопка «Получить ключ», поэтому после передачи ключа закрываем её,
                 // а основная вкладка программы узнаёт о ключе через BroadcastChannel — вторая копия программы не открывается.
                 send(ex, 200, "text/html; charset=utf-8", ("<!doctype html><meta charset=utf-8><title>vkbot — ключ</title>"
