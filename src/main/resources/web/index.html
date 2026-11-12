@@ -6,41 +6,62 @@
 <title>Статистика обсуждений VK</title>
 <style>
 :root{
-  --bg:#f5f6f8;--panel:#fff;--fg:#1c1f24;--muted:#6a7280;--line:#e2e5ea;--soft:#f0f2f5;
-  --accent:#2a5885;--accent-fg:#fff;--ok:#1f7a4d;--ok-bg:#e7f5ee;--bad:#b3261e;--bad-bg:#fdecea;--warn-bg:#fff4e0;
+  --bg:#eef1f5;--panel:#fff;--fg:#1a1d23;--muted:#677180;--line:#e3e7ed;--soft:#f3f5f8;
+  --accent:#2b6cde;--accent-fg:#fff;--accent-soft:#e8f0fd;--shadow:0 1px 2px rgba(16,24,40,.05),0 4px 16px rgba(16,24,40,.06);--ok:#1f7a4d;--ok-bg:#e7f5ee;--bad:#b3261e;--bad-bg:#fdecea;--warn-bg:#fff4e0;
   --bonus:#8a5a00;--bonus-bg:#fff2d6;
 }
 @media (prefers-color-scheme:dark){:root{
-  --bg:#15171b;--panel:#1d2026;--fg:#e7e9ec;--muted:#9aa2ad;--line:#2e333b;--soft:#252930;
-  --accent:#6ea6e6;--accent-fg:#0d1a28;--ok:#6fd3a0;--ok-bg:#16301f;--bad:#ff8a80;--bad-bg:#3a1a18;--warn-bg:#352a14;
+  --bg:#111317;--panel:#1b1e24;--fg:#e8eaed;--muted:#9aa2ad;--line:#2c313a;--soft:#232730;
+  --accent:#6ea6f0;--accent-fg:#0b1626;--accent-soft:#1d2a3d;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);--ok:#6fd3a0;--ok-bg:#16301f;--bad:#ff8a80;--bad-bg:#3a1a18;--warn-bg:#352a14;
   --bonus:#f0c060;--bonus-bg:#3a2e12;
 }}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 -apple-system,"Segoe UI",Roboto,Arial,sans-serif}
-.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
-h1{font-size:22px;margin:0 0 16px}
-h2{font-size:16px;margin:0 0 12px}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 Inter,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 72px}
+h1{font-size:18px;margin:0;font-weight:700;letter-spacing:-.01em}
+h2{font-size:17px;margin:0;font-weight:700;letter-spacing:-.01em}
+/* верхняя панель */
+.appbar{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.appbar .inner{max-width:1180px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:30px;height:30px;border-radius:9px;background:var(--accent);color:var(--accent-fg);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+.brand .sub{font-size:12.5px;color:var(--muted)}
+/* заголовки секций */
+.sechead{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.sechead .stepn{flex:none;width:28px;height:28px;border-radius:8px;background:var(--accent-soft);color:var(--accent);font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center}
+.sechead .t{flex:1;min-width:200px}
+.sechead p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.sechead .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.collapsed .sechead{margin-bottom:0}
+/* разделитель перед отчётом */
+.divider{display:flex;align-items:center;gap:14px;margin:36px 0 16px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
 a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-bottom:18px;box-shadow:var(--shadow)}
+.panel.report{border-top:4px solid var(--accent);padding-top:18px}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-input[type=text],input[type=password],input[type=date],input[type=number],select{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 9px;min-height:34px}
+input[type=text],input[type=password],input[type=date],input[type=number],select{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:7px 11px;min-height:38px;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 input[type=text]{flex:1;min-width:200px}
 input[type=number]{width:110px}
-button{font:inherit;border:1px solid var(--line);background:var(--soft);color:var(--fg);border-radius:8px;padding:6px 12px;min-height:34px;cursor:pointer}
-button:hover{filter:brightness(.97)}
-button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:600}
+button{font:inherit;font-weight:500;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:10px;padding:7px 14px;min-height:38px;cursor:pointer;transition:background .15s,border-color .15s,filter .15s}
+button:hover{background:var(--soft)}
+button:focus-visible{outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:600;box-shadow:0 1px 2px rgba(16,24,40,.12)}
+button.primary:hover{background:var(--accent);filter:brightness(1.07)}
+button.big{min-height:44px;padding:9px 22px;font-size:15.5px}
 button.icon{padding:4px 9px;min-height:30px;color:var(--muted)}
 button:disabled{opacity:.55;cursor:default}
 .muted{color:var(--muted)}.small{font-size:13px}
 .status{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
-.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:13px;font-weight:600}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:999px;font-size:13px;font-weight:600}
 .pill.ok{background:var(--ok-bg);color:var(--ok)}.pill.bad{background:var(--bad-bg);color:var(--bad)}
 .pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
 .paste{margin-top:12px;display:none}.paste.show{display:block}
 .paste ol{margin:6px 0 10px;padding-left:20px}
-.steps{display:flex;flex-direction:column;gap:14px;margin-top:12px}
+.steps{display:flex;flex-direction:column;gap:16px;margin-top:4px;padding:16px;background:var(--soft);border-radius:12px}
 .step{display:flex;gap:12px;align-items:flex-start}
-.step .num{flex:none;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-fg);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;margin-top:5px}
+.step .num{flex:none;width:22px;height:22px;border-radius:50%;background:var(--panel);border:1.5px solid var(--accent);color:var(--accent);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;margin-top:5px}
 .step>div{flex:1;min-width:0}
 .authlink{margin:6px 0;font-size:12.5px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .authlink .linkbtn{border:none;background:none;color:var(--accent);padding:0 4px;min-height:0;font-size:12.5px;text-decoration:underline;cursor:pointer}
@@ -51,8 +72,8 @@ button:disabled{opacity:.55;cursor:default}
 .msg{margin-top:10px;padding:8px 12px;border-radius:8px;font-size:14px;display:none}
 .msg.show{display:block}.msg.err{background:var(--bad-bg);color:var(--bad)}.msg.ok{background:var(--ok-bg);color:var(--ok)}
 table{border-collapse:collapse;width:100%}
-th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
-th{font-size:12.5px;color:var(--muted);font-weight:600;white-space:nowrap}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .scroll{overflow-x:auto}
 .comm td{padding:7px 8px}
@@ -70,17 +91,20 @@ tr.topics>td{background:var(--soft);padding:10px 12px 12px}
 .ttools{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .ttools button{font-size:12.5px;padding:2px 10px;min-height:26px}
 .empty{color:var(--muted);padding:14px 0}
-.calc{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+.calc{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
 .calc label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
-.formula{font-size:13px;color:var(--muted);max-width:620px}
+.formula{font-size:13px;color:var(--muted);background:var(--soft);border-radius:12px;padding:12px 14px;line-height:1.55}
+.linkbtn{border:none;background:none;color:var(--accent);padding:0;min-height:0;font-weight:500;cursor:pointer}
+.linkbtn:hover{background:none;text-decoration:underline}
 #log{display:none;margin-top:12px;background:var(--soft);border-radius:8px;padding:10px 12px;font:12.5px/1.5 ui-monospace,Consolas,monospace;max-height:220px;overflow:auto;white-space:pre-wrap}
 #log.show{display:block}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.tab{border-radius:999px;padding:5px 14px}
-.tab.active{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.tabs{display:inline-flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;padding:4px;background:var(--soft);border-radius:12px}
+.tab{border:none;background:none;border-radius:9px;padding:6px 14px;min-height:34px;color:var(--muted);font-weight:600}
+.tab:hover{background:var(--panel);color:var(--fg)}
+.tab.active{background:var(--panel);color:var(--fg);box-shadow:0 1px 3px rgba(16,24,40,.12)}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
-.card{background:var(--soft);border-radius:10px;padding:10px 14px}
-.card .v{font-size:22px;font-weight:650;font-variant-numeric:tabular-nums}.card .l{font-size:12.5px;color:var(--muted)}
+.card{background:var(--soft);border-radius:12px;padding:12px 16px}
+.card .v{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}.card .l{font-size:12.5px;color:var(--muted)}
 .res th.sort{cursor:pointer;user-select:none}.res th.sort:hover{color:var(--fg)}
 .res th.asc::after{content:" ▲"}.res th.desc::after{content:" ▼"}
 .res tbody tr.a{cursor:pointer}.res tbody tr.a:hover{background:var(--soft)}
@@ -94,28 +118,36 @@ tr.posts table td,tr.posts table th{padding:5px 8px;font-size:13px}
 .b.sk{color:var(--muted);background:var(--soft);border:1px solid var(--line)}
 .b{display:inline-block;font-size:11px;font-weight:700;color:var(--bonus);background:var(--bonus-bg);border-radius:5px;padding:0 5px;margin-right:4px}
 .cerr{background:var(--bad-bg);color:var(--bad);padding:10px 12px;border-radius:8px;margin-bottom:10px;font-size:14px}
-.top{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:10px 14px;margin-bottom:12px;background:var(--panel)}
+.top{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 16px;margin-bottom:14px;background:var(--panel)}
 .top .lbl{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
 .top .ttl{font-size:16px;font-weight:650;margin:2px 0}
 .top details{margin-top:6px}.top summary{cursor:pointer;font-size:13px;color:var(--muted)}
 .top table td,.top table th{padding:5px 8px;font-size:13px}
 .cwarn{background:var(--warn-bg);padding:8px 12px;border-radius:8px;margin-bottom:10px;font-size:13.5px}
-.restools{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
-@media print{.noprint{display:none!important}body{background:#fff}.panel{border:none}}
+.restools{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+@media print{.noprint,.appbar,.divider{display:none!important}body{background:#fff}.panel{border:none;box-shadow:none}}
+@media (max-width:640px){.panel{padding:16px}.appbar .inner{padding:10px 16px}}
 </style>
 </head>
 <body>
+<header class="appbar">
+  <div class="inner">
+    <div class="brand"><div class="logo">∑</div>
+      <div><h1>Статистика обсуждений VK</h1><div class="sub">сообщения, символы и бонусные баллы по авторам</div></div></div>
+  </div>
+</header>
 <div class="wrap">
-  <h1>Статистика обсуждений VK</h1>
 
   <!-- Доступ -->
   <section class="panel noprint" id="authPanel">
-    <div class="status">
-      <span class="row"><b>Ключ доступа VK</b> <span id="authPill" class="pill bad">…</span></span>
-      <span class="row">
+    <div class="sechead">
+      <span class="stepn">1</span>
+      <div class="t"><h2>Ключ доступа VK</h2>
+        <div style="margin-top:6px"><span id="authPill" class="pill bad">…</span></div></div>
+      <div class="actions">
         <button id="btnDiag" style="display:none">Проверить доступ</button>
         <button id="btnShowPaste" style="display:none">Сменить ключ</button>
-      </span>
+      </div>
     </div>
     <div class="paste" id="paste">
       <div class="steps">
@@ -158,7 +190,8 @@ tr.posts table td,tr.posts table th{padding:5px 8px;font-size:13px}
   <!-- Сообщества, подсчёт и результаты показываются только когда есть ключ VK -->
   <div id="workArea" style="display:none">
   <section class="panel">
-    <h2>Сообщества</h2>
+    <div class="sechead"><span class="stepn">2</span>
+      <div class="t"><h2>Сообщества</h2><p>Отметьте, какие сообщества и обсуждения считать, и выберите период.</p></div></div>
     <div class="row noprint" style="margin-bottom:12px">
       <input type="text" id="addInput" placeholder="Адрес сообщества: https://vk.com/club123, короткое имя или id">
       <button id="btnAdd">Добавить</button>
@@ -187,26 +220,30 @@ tr.posts table td,tr.posts table th{padding:5px 8px;font-size:13px}
 
   <!-- Подсчёт -->
   <section class="panel noprint">
-    <div class="calc">
+    <div class="sechead"><span class="stepn">3</span>
+      <div class="t"><h2>Подсчёт</h2><p>Укажите делитель и запустите расчёт по отмеченным сообществам.</p></div></div>
+    <div class="formula">
+      <b>Бонусные баллы</b> = (символы обычных сообщений + 2 × символы текста после строки «Бонусные баллы: …») / делитель.
+      Сама строка «Бонусные баллы» не считается. Сообщения берутся за выбранные сутки каждого сообщества.
+      Символы считаются без пробелов, переносов строк и невидимых символов.
+      Сообщения с первой строкой «не считать» входят в число сообщений и активность, но не дают символов и баллов.
+    </div>
+    <div class="calc" style="margin-top:16px">
       <label>Делитель для бонусных баллов
         <input type="number" id="divisor" min="1" step="1" value="500">
       </label>
-      <div class="formula">
-        <b>Бонусные баллы</b> = (символы обычных сообщений + 2 × символы текста после строки «Бонусные баллы: …») / делитель.
-        Сама строка «Бонусные баллы» не считается. Сообщения берутся за выбранные сутки каждого сообщества.
-        Символы считаются без пробелов, переносов строк и невидимых символов.
-        Сообщения с первой строкой «не считать» входят в число сообщений и активность, но не дают символов и баллов.
-      </div>
-      <button id="btnRun" class="primary" style="min-width:140px">Посчитать</button>
+      <button id="btnRun" class="primary big" style="min-width:160px">Посчитать</button>
     </div>
     <div class="msg" id="runMsg"></div>
+    <button id="logToggle" class="linkbtn small" style="display:none;margin-top:10px">Показать журнал подсчёта</button>
     <div id="log"></div>
   </section>
 
-  <!-- Результаты -->
-  <section class="panel" id="results" style="display:none">
+  <!-- Результаты: отделены от интерфейса расчёта разделителем и акцентной рамкой -->
+  <div class="divider" id="resDivider" style="display:none"><span>Отчёт</span></div>
+  <section class="panel report" id="results" style="display:none">
     <div class="restools">
-      <h2 style="margin:0">Результаты <span class="muted small" id="resMeta"></span></h2>
+      <div><h2>Результаты</h2><div class="muted small" id="resMeta" style="margin-top:2px"></div></div>
       <span class="row noprint">
         <button id="btnCsv">Скачать CSV (Excel)</button>
         <button id="btnPrint">Печать</button>
@@ -273,6 +310,7 @@ async function load() {
 let changingKey = false, lastAuthOk = null;
 function setPasteOpen(open) {
   $("paste").classList.toggle("show", open);
+  $("authPanel").classList.toggle("collapsed", !open);
   $("btnShowPaste").textContent = open ? "Скрыть" : "Сменить ключ";
 }
 function renderAuth() {
@@ -469,7 +507,7 @@ $("btnRun").onclick = async () => {
 async function poll(since) {
   polling = true;
   $("btnRun").disabled = true; $("btnRun").textContent = "Считаю…";
-  const log = $("log"); if (since === 0) log.textContent = ""; log.classList.add("show");
+  const log = $("log"); if (since === 0) { log.textContent = ""; $("logToggle").style.display = "none"; } log.classList.add("show");
   let st;
   try { st = await api("report/status?since=" + since); }
   catch (e) { msg("runMsg", e.message); polling = false; $("btnRun").disabled = false; $("btnRun").textContent = "Посчитать"; return; }
@@ -477,8 +515,13 @@ async function poll(since) {
   if (st.running) { setTimeout(() => poll(st.next), 700); return; }
   polling = false;
   $("btnRun").disabled = false; $("btnRun").textContent = "Посчитать";
+  // журнал после окончания сворачиваем (ошибки остаются видны в сообщении под кнопкой)
+  log.classList.remove("show"); $("logToggle").style.display = ""; $("logToggle").textContent = "Показать журнал подсчёта";
   if (st.error) { msg("runMsg", st.error); load(); return; }
-  if (st.result) { result = st.result; activeTab = "combined"; sortState = {}; renderResults(); load(); }
+  if (st.result) {
+    result = st.result; activeTab = "combined"; sortState = {}; renderResults(); load();
+    $("resDivider").scrollIntoView({behavior: "smooth", block: "start"});
+  }
 }
 
 // ---------- результаты ----------
@@ -488,8 +531,8 @@ function views() {
   return v;
 }
 function renderResults() {
-  $("results").style.display = "";
-  $("resMeta").textContent = "· " + result.generatedAt + " · делитель " + nf.format(result.divisor);
+  $("results").style.display = ""; $("resDivider").style.display = "";
+  $("resMeta").textContent = "Сформирован " + result.generatedAt + " · делитель " + nf.format(result.divisor);
   const vs = views();
   if (!vs.find(v => v.key === activeTab)) activeTab = "combined";
   $("tabs").innerHTML = vs.map(v => `<button class="tab ${v.key === activeTab ? "active" : ""}" data-tab="${v.key}">${esc(v.title)}</button>`).join("");
@@ -602,6 +645,10 @@ $("resBody").addEventListener("click", e => {
 
 // ---------- экспорт ----------
 $("btnPrint").onclick = () => window.print();
+$("logToggle").onclick = () => {
+  const open = $("log").classList.toggle("show");
+  $("logToggle").textContent = open ? "Скрыть журнал подсчёта" : "Показать журнал подсчёта";
+};
 $("btnCsv").onclick = () => {
   const v = views().find(x => x.key === activeTab);
   const q = s => '"' + String(s == null ? "" : s).replace(/"/g, '""') + '"';
