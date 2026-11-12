@@ -147,6 +147,7 @@ public final class WebServer {
                     throw e;
                 }
                 LOG.info("Ключ VK принят" + (who.isEmpty() ? "" : ": " + who) + ", " + until);
+                auth.setTokenOwner(who);
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("ok", true);
                 m.put("text", (who.isEmpty() ? "" : who + " · ") + until);

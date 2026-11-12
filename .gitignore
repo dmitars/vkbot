@@ -14,6 +14,7 @@ communities.json
 communities-demo.json
 *.json.tmp
 vk-token-cache.properties
+vk-token.properties
 vkid-token.properties
 *.tmp
 logs/
