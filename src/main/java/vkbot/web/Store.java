@@ -77,7 +77,7 @@ public final class Store {
     /** true — VK возвращает ключ прямо на http://localhost:порт/callback; false — на oauth.vk.com/blank.html. */
     private boolean autoRedirect;
     /** Запрашиваемые права (scope) для ключа, например "groups". Пусто — без дополнительных прав. */
-    private String scope = "";
+    private String scope = "groups"; // по документации board.getTopics: для закрытых и частных сообществ нужно право groups
 
     /**
      * @param defaultFrom/defaultTo период, который ставится всем сообществам при запуске:
@@ -235,7 +235,7 @@ public final class Store {
         JsonNode root = Json.parse(new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
         clientId = root.get("clientId").asText(clientId);
         autoRedirect = root.get("autoRedirect").asBoolean();
-        scope = root.get("scope").asText("");
+        scope = root.has("scope") ? root.get("scope").asText("") : scope;
         double d = Double.parseDouble(root.get("divisor").asText(String.valueOf(divisor)));
         divisor = d > 0 ? d : divisor;
         for (JsonNode n : root.get("communities")) {
