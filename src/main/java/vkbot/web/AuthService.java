@@ -34,10 +34,13 @@ public final class AuthService {
     /** Откуда брать ID приложения и способ возврата (настройки со страницы). */
     private java.util.function.Supplier<String> clientIdSource = () -> "";
     private java.util.function.BooleanSupplier autoRedirectSource = () -> false;
+    private java.util.function.Supplier<String> scopeSource = () -> "";
     private int uiPort = 8765;
 
     public void setAuthSettingsSource(java.util.function.Supplier<String> clientId,
-                                      java.util.function.BooleanSupplier autoRedirect, int port) {
+                                      java.util.function.BooleanSupplier autoRedirect, int port,
+                                      java.util.function.Supplier<String> scope) {
+        this.scopeSource = scope;
         this.clientIdSource = clientId;
         this.autoRedirectSource = autoRedirect;
         this.uiPort = port;
@@ -163,10 +166,17 @@ public final class AuthService {
                 m.put("clientId", clientId);
                 m.put("autoRedirect", auto);
                 m.put("callbackUrl", callbackUrl());
+                String scope = scopeSource.get();
+                if (scope == null || scope.isEmpty()) {
+                    scope = cfg.get("vkapp.scope", "");
+                }
+                m.put("scope", scopeSource.get());
                 if (!clientId.isEmpty()) {
                     m.put("authUrl", VkImplicitAuth.authorizeUrl(clientId,
-                            auto ? callbackUrl() : "https://oauth.vk.com/blank.html",
-                            cfg.apiVersion(), cfg.get("vkapp.scope", null)));
+                            auto ? callbackUrl() : "https://oauth.vk.com/blank.html", cfg.apiVersion(), scope));
+                    // ссылка с возвратом на blank.html — для закладки «→ vkbot» и ручной вставки
+                    m.put("authUrlBlank", VkImplicitAuth.authorizeUrl(clientId,
+                            "https://oauth.vk.com/blank.html", cfg.apiVersion(), scope));
                 }
                 m.put("canPaste", true);
                 break;

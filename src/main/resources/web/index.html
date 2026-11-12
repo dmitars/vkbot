@@ -42,6 +42,12 @@ button:disabled{opacity:.55;cursor:default}
 .step{display:flex;gap:12px;align-items:flex-start}
 .step .num{flex:none;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-fg);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;margin-top:5px}
 .step>div{flex:1;min-width:0}
+.authlink{margin:6px 0;font-size:12.5px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.authlink a{word-break:break-all}
+.authlink button{font-size:12px;padding:1px 8px;min-height:24px}
+#diag table td{padding:5px 8px;font-size:13.5px;vertical-align:top}
+#diag .okc{color:var(--ok);font-weight:700}#diag .badc{color:var(--bad);font-weight:700}
+#diag ul{margin:8px 0 0;padding-left:20px;font-size:13.5px}
 .bm{display:inline-block;margin-left:6px;padding:2px 10px;border:1px dashed var(--accent);border-radius:8px;font-weight:600;cursor:grab}
 .msg{margin-top:10px;padding:8px 12px;border-radius:8px;font-size:14px;display:none}
 .msg.show{display:block}.msg.err{background:var(--bad-bg);color:var(--bad)}.msg.ok{background:var(--ok-bg);color:var(--ok)}
@@ -109,6 +115,7 @@ tr.posts table td,tr.posts table th{padding:5px 8px;font-size:13px}
       <span class="row"><b>Ключ доступа VK</b> <span id="authPill" class="pill bad">…</span></span>
       <span class="row">
         <button id="btnGetKey" style="display:none">Получить ключ в VK</button>
+        <button id="btnDiag" style="display:none">Проверить доступ</button>
         <button id="btnShowPaste" style="display:none">Сменить ключ</button>
       </span>
     </div>
@@ -119,6 +126,9 @@ tr.posts table td,tr.posts table th{padding:5px 8px;font-size:13px}
             <input type="text" id="clientId" inputmode="numeric" placeholder="например 1234567" style="flex:0 1 180px;min-width:140px">
             <button id="btnSaveClient">Запомнить</button></div>
           <div class="small muted" style="margin-top:4px">Вводится один раз — программа его запомнит.</div>
+          <div class="row" style="margin-top:6px"><label class="small muted" for="scopeInput">Права (scope), необязательно</label>
+            <input type="text" id="scopeInput" placeholder="например groups" style="flex:0 1 180px;min-width:140px">
+            <button id="btnSaveScope">Запомнить</button></div>
         </div></div>
         <div class="step"><span class="num">2</span><div>
           <button id="btnGetKey" class="primary" disabled>Получить ключ в VK</button>
@@ -129,10 +139,12 @@ tr.posts table td,tr.posts table th{padding:5px 8px;font-size:13px}
             <label><input type="radio" name="redir" value="manual"> <b>Через закладку</b> — VK откроет страницу blank.html, на ней нажмите закладку</label>
             <a id="bookmarklet" class="bm" href="#" title="Перетащите на панель закладок">→ vkbot</a>
             <br><span class="muted" style="margin-left:22px;display:inline-block">Один раз перетащите кнопку «→ vkbot» мышью на панель закладок браузера (Ctrl+Shift+B — показать панель).</span>
+            <div class="authlink" style="margin-left:22px"></div>
           </div>
         </div></div>
         <div class="step"><span class="num">3</span><div>
-          <div class="small muted" style="margin-bottom:4px">Или по-старому — вставьте ключ (<code>vk1.a.…</code>) или адрес страницы <code>blank.html#access_token=…</code> целиком:</div>
+          <div class="small muted" style="margin-bottom:4px">Или по-старому — откройте ссылку ниже, после «Разрешить» скопируйте адрес страницы <code>blank.html#access_token=…</code> целиком (или нажмите на ней закладку «→ vkbot») и вставьте сюда:</div>
+          <div class="authlink"></div>
           <div class="row">
             <input type="password" id="pasteInput" placeholder="vk1.a.… или https://oauth.vk.com/blank.html#access_token=…" autocomplete="off" style="flex:1;min-width:200px">
             <button id="btnPaste">Сохранить и проверить</button>
@@ -142,6 +154,7 @@ tr.posts table td,tr.posts table th{padding:5px 8px;font-size:13px}
       <p class="small muted" style="margin:10px 0 0">Ключ должен быть получен на этом же компьютере и в этой же сети (без VPN только в браузере). Ключ не сохраняется на диск — после перезапуска программы его нужно получить снова.</p>
     </div>
     <div class="msg" id="authMsg"></div>
+    <div id="diag" style="display:none;margin-top:12px"></div>
   </section>
 
   <!-- Сообщества -->
@@ -260,6 +273,7 @@ function renderAuth() {
   const pill = $("authPill");
   pill.textContent = a.text; pill.className = "pill " + (a.ok ? "ok" : "bad");
   $("btnShowPaste").style.display = a.canPaste && a.ok ? "" : "none";
+  $("btnDiag").style.display = a.ok ? "" : "none";
   $("btnGetKey").disabled = !a.authUrl;
   if (a.canPaste) {
     if (document.activeElement !== $("clientId")) $("clientId").value = a.clientId || "";
@@ -267,6 +281,12 @@ function renderAuth() {
     $("cbUrl").textContent = a.callbackUrl;
     // закладка: со страницы blank.html переносит #access_token=… в программу
     $("bookmarklet").href = "javascript:location.href='" + a.callbackUrl + "'+location.hash";
+    if (document.activeElement !== $("scopeInput")) $("scopeInput").value = a.scope || "";
+    document.querySelectorAll(".authlink").forEach(el => {
+      el.innerHTML = a.authUrlBlank
+        ? `<span class="muted">Ссылка:</span> <a href="${esc(a.authUrlBlank)}" target="_blank" rel="noopener">${esc(a.authUrlBlank)}</a> <button type="button" data-copy="1">Копировать</button>`
+        : `<span class="muted">Ссылка появится, когда вы введёте ID приложения в шаге 1.</span>`;
+    });
   }
   if (a.canPaste && !a.ok) {
     $("paste").classList.add("show");
@@ -387,6 +407,25 @@ async function saveAuthSettings(body) {
   try { await api("auth/settings", body); msg("authMsg"); await load(); } catch (e) { msg("authMsg", e.message); }
 }
 $("btnSaveClient").onclick = () => saveAuthSettings({clientId: $("clientId").value});
+$("btnSaveScope").onclick = () => saveAuthSettings({scope: $("scopeInput").value});
+$("scopeInput").addEventListener("keydown", e => { if (e.key === "Enter") $("btnSaveScope").click(); });
+$("authPanel").addEventListener("click", async e => {
+  const b = e.target.closest("button[data-copy]"); if (!b) return;
+  try { await navigator.clipboard.writeText(state.auth.authUrlBlank); b.textContent = "Скопировано"; }
+  catch (_) { b.textContent = "Не удалось — выделите ссылку вручную"; }
+  setTimeout(() => b.textContent = "Копировать", 1500);
+});
+$("btnDiag").onclick = async () => {
+  const box = $("diag"); box.style.display = ""; box.innerHTML = '<span class="muted small">Проверяю…</span>';
+  $("btnDiag").disabled = true;
+  try {
+    const r = await api("auth/diagnose", {});
+    box.innerHTML = `<div class="scroll"><table><tbody>${r.checks.map(c =>
+      `<tr><td class="${c.ok ? "okc" : "badc"}">${c.ok ? "✓" : "✕"}</td><td>${esc(c.title)}</td><td class="muted">${esc(c.detail)}</td></tr>`).join("")}</tbody></table></div>`
+      + (r.advice.length ? `<ul>${r.advice.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : `<p class="small" style="margin:8px 0 0">Проблем не найдено.</p>`);
+  } catch (e) { box.innerHTML = `<div class="cerr">${esc(e.message)}</div>`; }
+  $("btnDiag").disabled = false;
+};
 $("clientId").addEventListener("keydown", e => { if (e.key === "Enter") $("btnSaveClient").click(); });
 $("clientId").addEventListener("change", () => $("btnSaveClient").click());
 document.querySelectorAll("input[name=redir]").forEach(r => r.addEventListener("change", () => saveAuthSettings({autoRedirect: r.value === "auto"})));

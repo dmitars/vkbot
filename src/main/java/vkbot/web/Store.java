@@ -76,6 +76,8 @@ public final class Store {
     private String clientId = "";
     /** true — VK возвращает ключ прямо на http://localhost:порт/callback; false — на oauth.vk.com/blank.html. */
     private boolean autoRedirect;
+    /** Запрашиваемые права (scope) для ключа, например "groups". Пусто — без дополнительных прав. */
+    private String scope = "";
 
     /**
      * @param defaultFrom/defaultTo период, который ставится всем сообществам при запуске:
@@ -111,6 +113,19 @@ public final class Store {
 
     public synchronized boolean autoRedirect() {
         return autoRedirect;
+    }
+
+    public synchronized String scope() {
+        return scope;
+    }
+
+    public synchronized void setScope(String s) throws IOException {
+        String v = s == null ? "" : s.trim().replaceAll("\\s+", "");
+        if (!v.isEmpty() && !v.matches("[a-z_,0-9]+")) {
+            throw new IllegalArgumentException("Права (scope) — слова через запятую, например groups или groups,offline");
+        }
+        scope = v;
+        save();
     }
 
     public synchronized void setAuthSettings(String clientId, Boolean autoRedirect) throws IOException {
@@ -220,6 +235,7 @@ public final class Store {
         JsonNode root = Json.parse(new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
         clientId = root.get("clientId").asText(clientId);
         autoRedirect = root.get("autoRedirect").asBoolean();
+        scope = root.get("scope").asText("");
         double d = Double.parseDouble(root.get("divisor").asText(String.valueOf(divisor)));
         divisor = d > 0 ? d : divisor;
         for (JsonNode n : root.get("communities")) {
@@ -249,6 +265,7 @@ public final class Store {
         root.put("divisor", divisor);
         root.put("clientId", clientId);
         root.put("autoRedirect", autoRedirect);
+        root.put("scope", scope);
         List<Object> list = new ArrayList<>();
         for (Entry e : entries) {
             list.add(e.toStoredMap());

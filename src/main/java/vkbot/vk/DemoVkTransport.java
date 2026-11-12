@@ -55,6 +55,10 @@ public final class DemoVkTransport implements VkTransport {
                 return "{\"response\":{\"groups\":[{\"id\":" + id + ",\"name\":" + Json.quote(name)
                         + ",\"screen_name\":" + Json.quote(key) + ",\"is_closed\":2}],\"profiles\":[]}}";
             }
+            case "account.getAppPermissions":
+                return "{\"response\":262144}";
+            case "groups.isMember":
+                return "{\"response\":1}";
             case "users.get":
                 return "{\"response\":[{\"id\":101,\"first_name\":\"Анна\",\"last_name\":\"Смирнова\"}]}";
             case "board.getTopics":

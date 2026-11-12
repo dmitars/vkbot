@@ -49,7 +49,7 @@ public final class WebServer {
         LocalDate today = LocalDate.now(cfg.zone());
         this.store = new Store(storeFile, today.minusDays(7), today.minusDays(1), cfg.getInt("bonus.divisor", 500));
         this.reports = new ReportService(cfg, transport, auth);
-        auth.setAuthSettingsSource(store::clientId, store::autoRedirect, cfg.getInt("ui.port", 8765));
+        auth.setAuthSettingsSource(store::clientId, store::autoRedirect, cfg.getInt("ui.port", 8765), store::scope);
     }
 
     public String start() throws IOException {
@@ -174,7 +174,12 @@ public final class WebServer {
                 }
                 return Map.of("ok", true);
             }
+            case "auth/diagnose":
+                return Diagnostics.run(new VkClient(transport.get(), auth.token(), cfg.apiVersion(), 0, 1), store.entries());
             case "auth/settings":
+                if (body.has("scope")) {
+                    store.setScope(body.get("scope").asText(""));
+                }
                 store.setAuthSettings(body.has("clientId") ? body.get("clientId").asText("") : null,
                         body.has("autoRedirect") ? body.get("autoRedirect").asBoolean() : null);
                 return Map.of("ok", true);
