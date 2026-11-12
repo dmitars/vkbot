@@ -265,8 +265,17 @@ async function load() {
   if (state.running && !polling) poll(0);
 }
 
+// Секция получения ключа: открыта, пока ключа нет; после получения сворачивается
+// и открывается снова только кнопкой «Сменить ключ».
+let changingKey = false, lastAuthOk = null;
+function setPasteOpen(open) {
+  $("paste").classList.toggle("show", open);
+  $("btnShowPaste").textContent = open ? "Скрыть" : "Сменить ключ";
+}
 function renderAuth() {
   const a = state.auth;
+  if (a.ok && lastAuthOk === false) changingKey = false; // только что получили новый ключ
+  lastAuthOk = a.ok;
   const pill = $("authPill");
   pill.textContent = a.text; pill.className = "pill " + (a.ok ? "ok" : "bad");
   $("btnShowPaste").style.display = a.canPaste && a.ok ? "" : "none";
@@ -280,8 +289,8 @@ function renderAuth() {
     $("bookmarklet").href = "javascript:location.href='" + a.callbackUrl + "'+location.hash";
     $("btnGetKeyBlank").disabled = !a.authUrlBlank;
   }
+  setPasteOpen(a.canPaste && (!a.ok || changingKey));
   if (a.canPaste && !a.ok) {
-    $("paste").classList.add("show");
     if (!document.activeElement || document.activeElement === document.body) (a.clientId ? $("btnGetKey") : $("clientId")).focus();
   }
   // ключ может прийти из другой вкладки (через автоматический возврат или закладку) — проверяем раз в 3 с
@@ -398,7 +407,7 @@ $("btnAllPeriod").onclick = async () => {
 $("btnGetKey").onclick = () => { if (state.auth.authUrl) window.open(state.auth.authUrl, "vkbot_auth"); };
 $("btnGetKeyBlank").onclick = () => { if (state.auth.authUrlBlank) window.open(state.auth.authUrlBlank, "vkbot_auth"); };
 // ключ пришёл в другой вкладке (мини-приложение, закладка, redirect) — сразу обновляем страницу
-try { new BroadcastChannel("vkbot").onmessage = () => { load(); msg("authMsg", "Ключ получен.", true); }; } catch (_) {}
+try { new BroadcastChannel("vkbot").onmessage = () => { changingKey = false; load(); msg("authMsg", "Ключ получен.", true); }; } catch (_) {}
 $("bookmarklet").onclick = e => { e.preventDefault(); msg("authMsg", "Эту кнопку нужно перетащить мышью на панель закладок браузера, а нажимать — уже на странице VK blank.html после «Разрешить».", true); };
 async function saveAuthSettings(body) {
   try { await api("auth/settings", body); msg("authMsg"); await load(); } catch (e) { msg("authMsg", e.message); }
@@ -425,14 +434,14 @@ $("clientId").addEventListener("keydown", e => { if (e.key === "Enter") $("btnSa
 $("clientId").addEventListener("change", () => $("btnSaveClient").click());
 document.querySelectorAll("input[name=redir]").forEach(r => r.addEventListener("change", () => saveAuthSettings({authMode: r.value})));
 window.addEventListener("focus", () => { if (state && !state.auth.ok) load(); });
-$("btnShowPaste").onclick = () => $("paste").classList.toggle("show");
+$("btnShowPaste").onclick = () => { changingKey = !changingKey; setPasteOpen(changingKey); };
 $("pasteInput").addEventListener("keydown", e => { if (e.key === "Enter") $("btnPaste").click(); });
 $("btnPaste").onclick = async () => {
   if (!$("pasteInput").value.trim()) return;
   $("btnPaste").disabled = true; msg("authMsg", "");
   try {
     const r = await api("auth", {input: $("pasteInput").value});
-    $("pasteInput").value = ""; $("paste").classList.remove("show");
+    $("pasteInput").value = ""; changingKey = false; setPasteOpen(false);
     msg("authMsg", "Ключ принят: " + r.text, true); await load();
   } catch (e) { msg("authMsg", e.message); await load(); }
   $("btnPaste").disabled = false;
